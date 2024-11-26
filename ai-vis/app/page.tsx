@@ -4,8 +4,9 @@ import { GPUEngine } from '@/lib/gpu/core';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-const Controls = dynamic(() => import('@/components/Controls').then(mod => mod.Controls), {
-  ssr: false
+const Controls = dynamic(() => import('@/components/Controls'), {
+  ssr: false,
+  loading: () => null
 });
 
 export default function Home() {
@@ -13,7 +14,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [engine, setEngine] = useState<GPUEngine | null>(null);
-  const [started, setStarted] = useState(false);
 
   const initGPU = async () => {
     const canvas = canvasRef.current;
@@ -27,6 +27,7 @@ export default function Home() {
       await gpuEngine.initialize(canvas);
       setEngine(gpuEngine);
       setIsInitialized(true);
+
     } catch (error) {
       console.error('Failed to initialize GPU:', error);
       setError(error instanceof Error ? error.message : 'Failed to initialize visualization');
@@ -59,23 +60,14 @@ export default function Home() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-black">
+    <div className="w-screen h-screen bg-black overflow-hidden relative">
       <Controls />
-      {!started && (
-        <div className="absolute top-4 left-4 z-10">
-          <button
-            onClick={() => setStarted(true)}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg backdrop-blur-sm transition-colors"
-          >
-            Start Visualization
-          </button>
-        </div>
-      )}
+      
       <canvas 
         ref={canvasRef}
-        id="gpuCanvas"
         className="w-full h-full"
       />
+      
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80">
           <div className="bg-red-900 p-6 rounded-lg max-w-md">
@@ -87,20 +79,19 @@ export default function Home() {
           </div>
         </div>
       )}
+      
       {!error && (
         !isInitialized ? (
           <p className="absolute inset-0 flex items-center justify-center text-white">Initializing WebGPU...</p>
         ) : (
-          started && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                onClick={handleStart}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                Start Audio Visualization
-              </button>
-            </div>
-          )
+          <div className="absolute top-4 left-4 z-10">
+            <button
+              onClick={handleStart}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              Start Audio Visualization
+            </button>
+          </div>
         )
       )}
     </div>

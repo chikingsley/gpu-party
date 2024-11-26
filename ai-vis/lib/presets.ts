@@ -133,5 +133,104 @@ export const presets = {
       shapeType: 'torus',
       morphSpeed: 0.15
     }
+  },
+  'Smooth Sphere': {
+    shape: {
+      shapeType: 'sphere',
+      irregularity: 0.1,
+      morphSpeed: 0.1,
+      rotationType: 'spin'
+    },
+    motion: {
+      speed: 0.3,
+      swirlIntensity: 0.2,
+      flowSpeed: 0.4,
+      cohesion: 0.9,
+      turbulence: 0.1
+    },
+    appearance: {
+      particleSize: 0.02,
+      glowIntensity: 0.5,
+      trailLength: 0.8,
+      particleDensity: 0.8
+    }
+  },
+  'Irregular Sphere': {
+    shape: {
+      shapeType: 'sphere',
+      irregularity: 0.4,
+      morphSpeed: 0.2,
+      rotationType: 'wobble'
+    },
+    motion: {
+      speed: 0.4,
+      swirlIntensity: 0.3,
+      flowSpeed: 0.5,
+      cohesion: 0.7,
+      turbulence: 0.3
+    },
+    appearance: {
+      particleSize: 0.02,
+      glowIntensity: 0.6,
+      trailLength: 0.7,
+      particleDensity: 0.7
+    }
+  },
+  'Swirling Sphere': {
+    shape: {
+      shapeType: 'sphere',
+      irregularity: 0.2,
+      morphSpeed: 0.15,
+      rotationType: 'flow'
+    },
+    motion: {
+      speed: 0.5,
+      swirlIntensity: 0.6,
+      flowSpeed: 0.7,
+      cohesion: 0.8,
+      turbulence: 0.2
+    },
+    appearance: {
+      particleSize: 0.02,
+      glowIntensity: 0.7,
+      trailLength: 0.85,
+      particleDensity: 0.75
+    }
+  },
+  'Abstract Form': {
+    shape: {
+      shapeType: 'abstract',
+      irregularity: 0.6,
+      morphSpeed: 0.1,
+      rotationType: 'static'
+    },
+    motion: {
+      speed: 0.2,
+      swirlIntensity: 0.2,
+      flowSpeed: 0.3,
+      cohesion: 0.9,
+      turbulence: 0.15
+    },
+    appearance: {
+      particleSize: 0.02,
+      glowIntensity: 0.5,
+      trailLength: 0.7,
+      particleDensity: 0.85
+    }
   }
+} as const;
+
+export type PresetName = keyof typeof presets;
+
+export interface AIState {
+  isListening: boolean;
+  isSpeaking: boolean;
+  mood: 'neutral' | 'active' | 'thinking' | 'responding';
+}
+
+export const aiStateColors = {
+  listening: '#4287f5',  // Blue
+  speaking: '#f542e6',   // Pink
+  thinking: '#42f5a7',   // Mint
+  neutral: '#f5f542'     // Yellow
 };

@@ -1,0 +1,11 @@
+{
+	"name": "gpu-party",
+	"dependencies": {
+		"leva": "^0.9.35"
+	},
+	"pnpm": {
+		"overrides": {
+			"leva>@radix-ui/react-portal": "1.0.2"
+		}
+	}
+}
