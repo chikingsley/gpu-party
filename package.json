@@ -1,7 +1,8 @@
 {
 	"name": "gpu-party",
 	"dependencies": {
-		"leva": "^0.9.35"
+		"leva": "^0.9.35",
+		"zustand": "^5.0.1"
 	},
 	"pnpm": {
 		"overrides": {

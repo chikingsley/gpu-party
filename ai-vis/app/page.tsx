@@ -1,6 +1,7 @@
 'use client';
 
 import { GPUEngine } from '@/lib/gpu/core';
+import { initWebGL2Fallback, initWebGL1Fallback, getDetailedErrorMessage } from '@/lib/fallbacks/webgl';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -21,16 +22,26 @@ export default function Home() {
 
     try {
       if (!navigator.gpu) {
-        throw new Error('WebGPU not supported - Coming soon! For now, please use Chrome Canary or Chrome with WebGPU enabled.');
+        const gl = canvas.getContext('webgl2');
+        if (gl) {
+          await initWebGL2Fallback(gl);
+          return;
+        }
+        const gl1 = canvas.getContext('webgl');
+        if (gl1) {
+          await initWebGL1Fallback(gl1);
+          return;
+        }
+        throw new Error('No compatible graphics API found');
       }
+
       const gpuEngine = await GPUEngine.getInstance();
       await gpuEngine.initialize(canvas);
       setEngine(gpuEngine);
       setIsInitialized(true);
 
     } catch (error) {
-      console.error('Failed to initialize GPU:', error);
-      setError(error instanceof Error ? error.message : 'Failed to initialize visualization');
+      setError(getDetailedErrorMessage(error));
     }
   };
 
