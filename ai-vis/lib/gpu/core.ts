@@ -581,7 +581,7 @@ export class GPUEngine {
     this.config.size = { width, height };
   }
 
-  private resize(): void {
+  public resize(): void {
     this.updateSize();
     this.createDepthTexture();
     this.configureContext();

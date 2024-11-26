@@ -63,7 +63,7 @@ export function createUniformBuffer<T extends { [key: string]: number | Float32A
   data: T,
   label: string
 ): GPUBuffer {
-  const uniformArray = new Float32Array(Object.values(data).reduce((acc, val) => {
+  const uniformArray = new Float32Array(Object.values(data).reduce((acc: number, val: number | Float32Array) => {
     return acc + (val instanceof Float32Array ? val.length : 1);
   }, 0));
 
