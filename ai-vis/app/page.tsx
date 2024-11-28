@@ -1,7 +1,6 @@
 'use client';
 
 import { GPUEngine } from '@/lib/gpu/core';
-import { initWebGL2Fallback, initWebGL1Fallback, getDetailedErrorMessage } from '@/lib/fallbacks/webgl';
 import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
@@ -18,7 +17,29 @@ export default function Home() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
+<<<<<<< HEAD
   // Initialize GPU engine
+=======
+  const initGPU = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    try {
+      if (!navigator.gpu) {
+        throw new Error('WebGPU not supported - Coming soon! For now, please use Chrome Canary or Chrome with WebGPU enabled.');
+      }
+      const gpuEngine = await GPUEngine.getInstance();
+      await gpuEngine.initialize(canvas);
+      setEngine(gpuEngine);
+      setIsInitialized(true);
+
+    } catch (error) {
+      console.error('Failed to initialize GPU:', error);
+      setError(error instanceof Error ? error.message : 'Failed to initialize visualization');
+    }
+  };
+
+>>>>>>> parent of f88da56 (works now - will try the big push next)
   useEffect(() => {
     const initGPU = async () => {
       const canvas = canvasRef.current;

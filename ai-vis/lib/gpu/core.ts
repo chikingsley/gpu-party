@@ -11,44 +11,6 @@ interface UniformData {
   average: number;
 }
 
-interface ExtendedPerformance extends Performance {
-  memory?: {
-    usedJSHeapSize: number;
-    totalJSHeapSize: number;
-    jsHeapSizeLimit: number;
-  };
-}
-
-declare global {
-  interface Window {
-    performance: ExtendedPerformance;
-  }
-}
-
-// Define a base interface for GPU binding resources
-interface BaseGPUBindingResource {
-  buffer?: GPUBuffer;
-  offset?: number;
-  size?: number;
-}
-
-// Extend both the base interface and GPUBindingResource
-interface GPUBindingResourceWithBuffer extends BaseGPUBindingResource {
-  buffer: GPUBuffer;
-  offset?: number;
-  size?: number;
-}
-
-interface GPUBufferBinding {
-  buffer: GPUBuffer;
-  offset?: number;
-  size?: number;
-}
-
-function isGPUBufferBinding(resource: GPUBindingResource): resource is GPUBufferBinding {
-  return 'buffer' in resource;
-}
-
 export class GPUEngine {
   private static instance: GPUEngine | null = null;
   private canvas: HTMLCanvasElement | null = null;
@@ -65,35 +27,6 @@ export class GPUEngine {
       Math.min(window.devicePixelRatio || 1, 2) : 
       1,
     size: { width: 0, height: 0 }
-  };
-
-  private visualizerConfig = {
-    // Shape controls
-    shapeType: 'sphere' as 'sphere' | 'torus' | 'cube' | 'spiral' | 'wave' | 'abstract',
-    morphSpeed: 0.2,
-    irregularity: 0.3,
-    rotationType: 'spin' as 'static' | 'spin' | 'wobble' | 'flow',
-    size: 1.0,
-    complexity: 0.5,
-    
-    // Color controls
-    baseColor: { h: 0.5, s: 0.8, v: 0.9 },
-    colorMode: 'single' as 'single' | 'gradient' | 'rainbow' | 'audio',
-    colorSpeed: 0.3,
-    colorSpread: 0.5,
-    brightness: 0.8,
-    contrast: 0.5,
-    
-    // Audio response
-    audioResponseType: 'both' as 'color' | 'brightness' | 'both' | 'none',
-    audioColorShift: 0.2,
-    audioBrightnessBoost: 0.3,
-    audioTransitionSpeed: 0.3,
-    
-    // Performance
-    particleCount: 100000,
-    quality: 'auto' as 'low' | 'medium' | 'high' | 'auto',
-    antialiasing: true
   };
 
   // Pipeline states and resources
@@ -121,15 +54,8 @@ export class GPUEngine {
   // Depth texture
   private depthTexture: GPUTexture | null = null;
 
-  private performanceStats = {
-    fps: [] as number[],
-    frameTime: [] as number[],
-    gpuTime: [] as number[],
-    memoryUsage: [] as number[]
-  };
-
   // Make constructor private to enforce singleton pattern
-  protected constructor() {
+  private constructor() {
     console.log('Creating GPU Engine instance...');
     if (!this.checkWebGPUSupport()) {
       throw new Error('WebGPU is not supported in this browser');
@@ -254,6 +180,17 @@ export class GPUEngine {
     await this.createBuffers();
   }
 
+  private updateSize(): void {
+    if (!this.canvas) return;
+    
+    const width = this.canvas.clientWidth * this.config.devicePixelRatio;
+    const height = this.canvas.clientHeight * this.config.devicePixelRatio;
+    
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.config.size = { width, height };
+  }
+
   private configureContext(): void {
     if (!this.context || !this.device) return;
 
@@ -287,10 +224,6 @@ export class GPUEngine {
   }
 
   private async createComputePipeline(): Promise<void> {
-    if (!this.device) {
-      throw new Error('GPU Device not initialized');
-    }
-
     const shaderModule = await this.loadShaderModule('simulation.wgsl', 'Particle simulation compute shader');
 
     // Create pipeline layout
@@ -402,10 +335,6 @@ export class GPUEngine {
   }
 
   private async createRenderPipeline(): Promise<void> {
-    if (!this.device) {
-      throw new Error('GPU Device not initialized');
-    }
-
     const shaderModule = await this.loadShaderModule('render.wgsl', 'Particle render shader');
 
     // Create pipeline layout
@@ -482,103 +411,57 @@ export class GPUEngine {
     });
 
     // Create render bind group
-    this.renderBindGroup = this.createBindGroup(bindGroupLayout, [
-      {
-        binding: 0,
-        resource: {
-          buffer: this.cameraUniformBuffer!,
-          size: 2 * 16 * 4
+    this.renderBindGroup = this.device.createBindGroup({
+      layout: bindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          resource: { buffer: this.cameraUniformBuffer }
+        },
+        {
+          binding: 1,
+          resource: { buffer: this.particleBuffer }
         }
-      },
-      {
-        binding: 1,
-        resource: {
-          buffer: this.particleBuffer!,
-          size: this.particleCount * 3 * 4 * 4
-        }
-      }
-    ]);
+      ],
+      label: 'Render bind group'
+    });
   }
 
   private async createBuffers(): Promise<void> {
     // No-op
   }
 
-  public setConfig(key: string, value: unknown): void {
-    if (key in this.visualizerConfig) {
-      const oldValue = (this.visualizerConfig as any)[key];
-      (this.visualizerConfig as any)[key] = value;
-      
-      // Handle specific updates
-      switch (key) {
-        case 'shapeType':
-          this.updateShape(value as string);
-          break;
-        case 'baseColor':
-        case 'colorMode':
-        case 'colorSpeed':
-        case 'colorSpread':
-          this.updateColors();
-          break;
-        case 'particleCount':
-          this.updateParticleCount(value as number);
-          break;
-        case 'quality':
-          this.updateQuality(value as string);
-          break;
-        case 'antialiasing':
-          this.updateAntialiasing(value as boolean);
-          break;
-      }
-      
-      // Force a re-render
-      if (this.canvas) {
-        this.render();
-      }
-    }
-  }
+  private updateCameraUniforms(): void {
+    if (!this.device || !this.cameraUniformBuffer || !this.canvas) return;
 
-  private updateShape(shapeType: string): void {
-    // Implementation for updating shape
-    console.log('Updating shape to:', shapeType);
-    // Here we would update the simulation shader uniforms and/or particle positions
-  }
-
-  private updateColors(): void {
-    // Implementation for updating colors
-    console.log('Updating colors with config:', {
-      baseColor: this.visualizerConfig.baseColor,
-      colorMode: this.visualizerConfig.colorMode,
-      colorSpeed: this.visualizerConfig.colorSpeed,
-      colorSpread: this.visualizerConfig.colorSpread
-    });
-    // Here we would update the color uniforms in the shaders
-  }
-
-  private updateParticleCount(count: number): void {
-    // Implementation for updating particle count
-    console.log('Updating particle count to:', count);
-  }
-
-  private updateQuality(quality: string): void {
-    // Implementation for updating quality
-    console.log('Updating quality to:', quality);
-  }
-
-  private updateAntialiasing(enabled: boolean): void {
-    // Implementation for updating antialiasing
-    console.log('Updating antialiasing to:', enabled);
-  }
-
-  private updateSize(): void {
-    if (!this.canvas) return;
+    const aspect = this.canvas.width / this.canvas.height;
+    const projectionMatrix = new Float32Array(16);
+    const viewMatrix = new Float32Array(16);
     
-    const width = this.canvas.clientWidth * this.config.devicePixelRatio;
-    const height = this.canvas.clientHeight * this.config.devicePixelRatio;
+    // Create perspective projection matrix
+    const fov = (60 * Math.PI) / 180; // 60 degrees in radians
+    const near = 0.1;
+    const far = 100.0;
     
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.config.size = { width, height };
+    // Perspective matrix
+    const f = 1.0 / Math.tan(fov / 2);
+    projectionMatrix[0] = f / aspect;
+    projectionMatrix[5] = f;
+    projectionMatrix[10] = (far + near) / (near - far);
+    projectionMatrix[11] = -1.0;
+    projectionMatrix[14] = (2 * far * near) / (near - far);
+    
+    // View matrix (camera at (0, 0, -5) looking at origin)
+    viewMatrix[0] = 1;
+    viewMatrix[5] = 1;
+    viewMatrix[10] = 1;
+    viewMatrix[11] = 0;
+    viewMatrix[14] = -5;
+    viewMatrix[15] = 1;
+    
+    // Upload both matrices
+    const cameraData = new Float32Array([...viewMatrix, ...projectionMatrix]);
+    this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
   }
 
   public resize(): void {
@@ -650,7 +533,7 @@ export class GPUEngine {
       audioData.high,                 // regular highs
       audioData.average * 1.5         // amplified average
     ]);
-    this.writeUniformBuffer(uniformData);
+    this.device.queue.writeBuffer(this.uniformBuffer, 0, uniformData);
 
     // Request next frame
     requestAnimationFrame(() => this.render());
@@ -669,10 +552,6 @@ export class GPUEngine {
   }
 
   private async loadShaderModule(name: string, label: string): Promise<GPUShaderModule> {
-    if (!this.device) {
-      throw new Error('GPU Device not initialized');
-    }
-    
     console.log(`Loading shader: ${name}`);
     const response = await fetch(`/shaders/${name}`);
     let shaderCode = await response.text();
@@ -698,122 +577,10 @@ export class GPUEngine {
       code: shaderCode,
     });
   }
-
-  private monitorPerformance() {
-    // Track FPS
-    const now = performance.now();
-    const frameTime = now - this.lastFrameTime;
-    this.performanceStats.fps.push(1000 / frameTime);
-    this.performanceStats.frameTime.push(frameTime);
-    
-    // Type-safe memory check
-    const perf = window.performance as ExtendedPerformance;
-    if (perf.memory) {
-      this.performanceStats.memoryUsage.push(perf.memory.usedJSHeapSize);
-    }
-
-    this.trimPerformanceStats();
-    this.analyzePerformance();
-  }
-
-  private analyzePerformance() {
-    const avgFPS = this.getAverageFPS();
-    if (avgFPS < 30) {
-      this.reduceQuality();
-    } else if (avgFPS > 58 && this.canIncreaseQuality()) {
-      this.increaseQuality();
-    }
-  }
-
-  private trimPerformanceStats() {
-    const maxSamples = 60; // Keep last second at 60fps
-    if (this.performanceStats.fps.length > maxSamples) {
-      this.performanceStats.fps = this.performanceStats.fps.slice(-maxSamples);
-      this.performanceStats.frameTime = this.performanceStats.frameTime.slice(-maxSamples);
-      this.performanceStats.gpuTime = this.performanceStats.gpuTime.slice(-maxSamples);
-      this.performanceStats.memoryUsage = this.performanceStats.memoryUsage.slice(-maxSamples);
-    }
-  }
-
-  private getAverageFPS(): number {
-    const samples = this.performanceStats.fps;
-    return samples.reduce((a, b) => a + b, 0) / samples.length;
-  }
-
-  private reduceQuality() {
-    // Implement quality reduction logic
-  }
-
-  private increaseQuality() {
-    // Implement quality increase logic
-  }
-
-  private canIncreaseQuality(): boolean {
-    // Implement quality check logic
-    return true;
-  }
-
-  private createBindGroup(layout: GPUBindGroupLayout, entries: GPUBindGroupEntry[]): GPUBindGroup {
-    if (!this.device) {
-      throw new Error('GPU Device not initialized');
-    }
-
-    return this.device.createBindGroup({
-      layout,
-      entries: entries.map(entry => ({
-        ...entry,
-        resource: isGPUBufferBinding(entry.resource) ? {
-          buffer: entry.resource.buffer,
-          offset: entry.resource.offset || 0,
-          size: entry.resource.size
-        } : entry.resource
-      }))
-    });
-  }
-
-  private writeUniformBuffer(data: Float32Array) {
-    if (!this.device || !this.uniformBuffer) {
-      throw new Error('Device or uniform buffer not initialized');
-    }
-    this.device.queue.writeBuffer(this.uniformBuffer, 0, data);
-  }
-
-  private updateCameraUniforms(): void {
-    if (!this.device || !this.cameraUniformBuffer || !this.canvas) return;
-
-    const aspect = this.canvas.width / this.canvas.height;
-    const projectionMatrix = new Float32Array(16);
-    const viewMatrix = new Float32Array(16);
-    
-    // Create perspective projection matrix
-    const fov = (60 * Math.PI) / 180; // 60 degrees in radians
-    const near = 0.1;
-    const far = 100.0;
-    
-    // Perspective matrix
-    const f = 1.0 / Math.tan(fov / 2);
-    projectionMatrix[0] = f / aspect;
-    projectionMatrix[5] = f;
-    projectionMatrix[10] = (far + near) / (near - far);
-    projectionMatrix[11] = -1.0;
-    projectionMatrix[14] = (2 * far * near) / (near - far);
-    
-    // View matrix (camera at (0, 0, -5) looking at origin)
-    viewMatrix[0] = 1;
-    viewMatrix[5] = 1;
-    viewMatrix[10] = 1;
-    viewMatrix[11] = 0;
-    viewMatrix[14] = -5;
-    viewMatrix[15] = 1;
-    
-    // Upload both matrices
-    const cameraData = new Float32Array([...viewMatrix, ...projectionMatrix]);
-    this.device.queue.writeBuffer(this.cameraUniformBuffer, 0, cameraData);
-  }
 }
 
 // Singleton instance
-let gpuEngine: Promise<GPUEngine> | null = null;
+let gpuEngine: GPUEngine | null = null;
 
 if (typeof window !== 'undefined') {
   console.log('Creating GPU Engine instance...');

@@ -1,92 +1,36 @@
-# AI State Visualization
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-A real-time WebGPU-powered visualization system for AI state and interactions. This project provides a dynamic, GPU-accelerated visual representation of AI states including listening, thinking, speaking, and processing.
+## Getting Started
 
-## Features
-
-- Real-time WebGPU-based particle system
-- Dynamic state transitions with smooth animations
-- Audio-reactive visualization
-- Customizable presets and controls
-- Fallback support for WebGL2 and WebGL
-- Performance optimization with automatic quality adjustments
-
-## Demo
-
-[Add demo video/gif here]
-
-## Requirements
-
-- Modern browser with WebGPU support (Chrome Canary or Chrome with WebGPU flag enabled)
-- Node.js 18+ and npm/yarn/pnpm
-
-## Installation
+First, run the development server:
 
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
 npm run dev
-
-# Build for production
-npm run build
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## Usage
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. Start the development server
-2. Click "Start Audio Visualization" to begin
-3. Use the control panel to adjust:
-   - State Colors
-   - Audio Response
-   - Shape Properties
-   - Performance Settings
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Controls
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-The visualization can be customized using the control panel:
+## Learn More
 
-- **State Colors**: Customize colors and animations for different AI states
-  - Idle
-  - Listening
-  - Speaking
-  - Thinking
-  - Active
+To learn more about Next.js, take a look at the following resources:
 
-- **Audio Response**: Adjust how the visualization reacts to audio
-  - Response Type (color/brightness/both)
-  - Color Shift
-  - Brightness Boost
-  - Transition Speed
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-- **Shape**: Modify the base visualization
-  - Shape Type (sphere/abstract)
-  - Irregularity
-  - Morph Speed
-  - Rotation Type
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-- **Performance**: Fine-tune rendering quality
-  - Quality Level
-  - Antialiasing
-  - Particle Count
+## Deploy on Vercel
 
-## Browser Support
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-- Primary: Chromium-based browsers with WebGPU enabled
-- Fallback: Browsers with WebGL2/WebGL support
-- For WebGPU, enable `chrome://flags/#enable-unsafe-webgpu`
-
-## Development
-
-The project uses:
-
-- Next.js for the framework
-- WebGPU for primary rendering
-- Leva for controls
-- WGSL for shaders
-- TypeScript for type safety
-
-## License
-
-[Add license information]
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
