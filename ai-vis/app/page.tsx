@@ -17,29 +17,7 @@ export default function Home() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isAudioInitialized, setIsAudioInitialized] = useState(false);
 
-<<<<<<< HEAD
   // Initialize GPU engine
-=======
-  const initGPU = async () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    try {
-      if (!navigator.gpu) {
-        throw new Error('WebGPU not supported - Coming soon! For now, please use Chrome Canary or Chrome with WebGPU enabled.');
-      }
-      const gpuEngine = await GPUEngine.getInstance();
-      await gpuEngine.initialize(canvas);
-      setEngine(gpuEngine);
-      setIsInitialized(true);
-
-    } catch (error) {
-      console.error('Failed to initialize GPU:', error);
-      setError(error instanceof Error ? error.message : 'Failed to initialize visualization');
-    }
-  };
-
->>>>>>> parent of f88da56 (works now - will try the big push next)
   useEffect(() => {
     const initGPU = async () => {
       const canvas = canvasRef.current;
@@ -47,26 +25,16 @@ export default function Home() {
 
       try {
         if (!navigator.gpu) {
-          const gl = canvas.getContext('webgl2');
-          if (gl) {
-            await initWebGL2Fallback(gl);
-            return;
-          }
-          const gl1 = canvas.getContext('webgl');
-          if (gl1) {
-            await initWebGL1Fallback(gl1);
-            return;
-          }
-          throw new Error('No compatible graphics API found');
+          throw new Error('WebGPU not supported - Coming soon! For now, please use Chrome Canary or Chrome with WebGPU enabled.');
         }
-
         const gpuEngine = await GPUEngine.getInstance();
-        setEngine(gpuEngine);
         await gpuEngine.initialize(canvas);
+        setEngine(gpuEngine);
         setIsInitialized(true);
 
       } catch (error) {
-        setError(getDetailedErrorMessage(error));
+        console.error('Failed to initialize GPU:', error);
+        setError(error instanceof Error ? error.message : 'Failed to initialize visualization');
       }
     };
 
